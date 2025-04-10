@@ -96,18 +96,27 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tryMoveToFoundation(card, column, tableau, foundations)) {
               renderTableau(tableau);
               renderFoundations(foundations);
+              if (checkForWin(foundations)) {
+                document.getElementById('win-popup').classList.remove('hidden');
+              }
               return;
             }
           
             if (tryMoveToEmptyColumn(card, column, tableau)) {
               renderTableau(tableau);
               renderFoundations(foundations);
+              if (checkForWin(foundations)) {
+                document.getElementById('win-popup').classList.remove('hidden');
+              }
               return;
             }
           
             if (tryMoveToStack(card, column, tableau)) {
               renderTableau(tableau);
               renderFoundations(foundations);
+              if (checkForWin(foundations)) {
+                document.getElementById('win-popup').classList.remove('hidden');
+              }
               return;
             }
           });
@@ -225,6 +234,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function checkForWin(foundations) {
     return Object.values(foundations).every(pile => pile.length === 13);
   }  
+
+  document.getElementById('play-again').addEventListener('click', () => {
+    location.reload();
+  });
   
 
   
@@ -233,14 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
   renderTableau(tableau);
   renderFoundations(foundations);
 
-
-  if (checkForWin(foundations)) {
-    document.getElementById('win-popup').classList.remove('hidden');
-  }
-
-  document.getElementById('play-again').addEventListener('click', () => {
-    location.reload();
-  });
 
   console.log("Tableau:", tableau);
 });
