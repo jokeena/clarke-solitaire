@@ -1,0 +1,66 @@
+/* Background and body styling */
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    background-color: #0B6623; /* deep green */
+    font-family: 'Segoe UI', sans-serif;
+    background-image: radial-gradient(circle, #0b6623 0%, #064d1f 100%);
+    overflow: auto;
+    color: white;
+  }
+  
+  /* Title */
+  h1 {
+    text-align: center;
+    font-size: 48px;
+    margin: 20px 0;
+    color: #fff;
+    text-shadow: 2px 2px #000;
+  }
+  
+  /* Main tableau container */
+  #tableau {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px;
+    align-items: flex-start;
+  }
+  
+  /* Each column of cards */
+  .column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  /* Card appearance */
+  .card {
+    width: 60px;
+    height: 90px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    color: black;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+    user-select: none;
+  }
+  
+  /* Red cards */
+  .card.red {
+    color: red;
+  }
+  
+  /* Face-down card */
+  .card.face-down {
+    background-color: navy;
+    color: transparent;
+    border: 1px solid #111;
+  }
+  
