@@ -266,6 +266,10 @@ document.addEventListener('DOMContentLoaded', () => {
       renderFoundations(foundations);
     }
   });
+
+  document.getElementById('restart-button').addEventListener('click', () => {
+    location.reload();
+  });
   
 
   
