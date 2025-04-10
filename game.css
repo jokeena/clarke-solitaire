@@ -46,6 +46,13 @@ h1 {
   margin-top: -3.8em;  /* About half the card height (4.6em) */
 }
 
+.column .card.back + .card.back {
+  margin-top: -5.5em; /* More overlap for consecutive face-down cards */
+}
+.column .card.back + .card:not(.back) {
+  margin-top: -5.5em; /* More overlap for consecutive face-down cards */
+}
+
 /* Playing card style (inspired by Anika Henke’s design) */
 .playingCards .card {
   display: inline-block;
