@@ -221,6 +221,10 @@ document.addEventListener('DOMContentLoaded', () => {
   
     return false;
   }
+
+  function checkForWin(foundations) {
+    return Object.values(foundations).every(pile => pile.length === 13);
+  }  
   
 
   
@@ -228,6 +232,15 @@ document.addEventListener('DOMContentLoaded', () => {
   let { tableau } = dealCards(deck);
   renderTableau(tableau);
   renderFoundations(foundations);
+
+
+  if (checkForWin(foundations)) {
+    document.getElementById('win-popup').classList.remove('hidden');
+  }
+
+  document.getElementById('play-again').addEventListener('click', () => {
+    location.reload();
+  });
 
   console.log("Tableau:", tableau);
 });

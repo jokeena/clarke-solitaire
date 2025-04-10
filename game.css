@@ -31,8 +31,12 @@ h1 {
 .column {
   display: flex;
   flex-direction: column;
-  /* gap: 16px;  <-- removed so cards can overlap */
+  gap: 16px;
+  min-height: 300px; /* keep vertical space */
+  width: 70px;       /* fixed width for consistent layout */
+  border: 1px dashed transparent; /* optional: for spacing */
 }
+
 
 /* Overlap each card except the first within each column */
 .column .card + .card {
@@ -120,5 +124,44 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Popup content box */
+.popup-content {
+  background: white;
+  color: black;
+  padding: 40px 60px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 0 20px #000;
+}
+
+.popup-content h2 {
+  margin-bottom: 20px;
+  font-size: 32px;
+}
+
+.popup-content button {
+  font-size: 18px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+/* Hidden class */
+.hidden {
+  display: none;
 }
 
