@@ -93,13 +93,22 @@ document.addEventListener('DOMContentLoaded', () => {
           cardDiv.appendChild(cardContent);
 
           cardDiv.addEventListener('click', () => {
-            const movedToFoundation = tryMoveToFoundation(card, column, tableau, foundations);
-            const movedToEmpty = tryMoveToEmptyColumn(card, column, tableau);
-            const movedToStack = tryMoveToStack(card, column, tableau);
-          
-            if (movedToFoundation || movedToEmpty || movedToStack) {
+            if (tryMoveToFoundation(card, column, tableau, foundations)) {
               renderTableau(tableau);
               renderFoundations(foundations);
+              return;
+            }
+          
+            if (tryMoveToEmptyColumn(card, column, tableau)) {
+              renderTableau(tableau);
+              renderFoundations(foundations);
+              return;
+            }
+          
+            if (tryMoveToStack(card, column, tableau)) {
+              renderTableau(tableau);
+              renderFoundations(foundations);
+              return;
             }
           });
           
