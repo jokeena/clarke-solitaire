@@ -36,7 +36,7 @@ h1 {
 
 /* Overlap each card except the first within each column */
 .column .card + .card {
-  margin-top: -2.3em;  /* About half the card height (4.6em) */
+  margin-top: -3.1em;  /* About half the card height (4.6em) */
 }
 
 /* Playing card style (inspired by Anika Henke’s design) */
@@ -76,21 +76,49 @@ h1 {
   box-shadow: inset 0 0 0.5em #000;
 }
 
-/* Rank and suit placement */
-.playingCards .card .rank,
-.playingCards .card .suit {
-  display: block;
-  line-height: 1;
-  text-align: left;
+
+.card-content {
+  position: absolute;
+  top: 0.25em;
+  left: 0.3em;
+  display: flex;
+  align-items: center;
+  gap: 0.1em;
 }
 
-.playingCards .card .rank {
-  font-size: 1em;
+.card-content .rank {
+  font-size: 30px;
+  font-weight: bold;
 }
 
-.playingCards .card .suit {
-  font-size: 1.2em;
+.card-content .suit-symbol {
+  font-size: 2em;  /* Bigger than the rank */
   line-height: 1;
-  margin-top: 0em;
-  text-align: left;
 }
+
+#game-area {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 60px;
+}
+
+.foundations {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.foundation {
+  width: 3.3em;
+  height: 4.6em;
+  border: 2px dashed #aaa;
+  border-radius: 0.3em;
+  box-shadow: 0 0 6px rgba(0,0,0,0.3);
+  background-color: #1c4a2b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
