@@ -1,66 +1,96 @@
 /* Background and body styling */
-body {
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    background-color: #0B6623; /* deep green */
-    font-family: 'Segoe UI', sans-serif;
-    background-image: radial-gradient(circle, #0b6623 0%, #064d1f 100%);
-    overflow: auto;
-    color: white;
-  }
-  
-  /* Title */
-  h1 {
-    text-align: center;
-    font-size: 48px;
-    margin: 20px 0;
-    color: #fff;
-    text-shadow: 2px 2px #000;
-  }
-  
-  /* Main tableau container */
-  #tableau {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    padding: 20px;
-    align-items: flex-start;
-  }
-  
-  /* Each column of cards */
-  .column {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  /* Card appearance */
-  .card {
-    width: 60px;
-    height: 90px;
-    border-radius: 8px;
-    border: 1px solid #333;
-    font-size: 18px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: white;
-    color: black;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
-    user-select: none;
-  }
-  
-  /* Red cards */
-  .card.red {
-    color: red;
-  }
-  
-  /* Face-down card */
-  .card.face-down {
-    background-color: navy;
-    color: transparent;
-    border: 1px solid #111;
-  }
-  
+body.playingCards {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: #0B6623;
+  background-image: radial-gradient(circle, #0b6623 0%, #064d1f 100%);
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: white;
+}
+
+/* Title styling */
+h1 {
+  text-align: center;
+  font-size: 48px;
+  margin: 20px 0;
+  color: #fff;
+  text-shadow: 2px 2px #000;
+}
+
+/* Tableau layout */
+#tableau {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+}
+
+/* Each column of cards */
+.column {
+  display: flex;
+  flex-direction: column;
+  /* gap: 16px;  <-- removed so cards can overlap */
+}
+
+/* Overlap each card except the first within each column */
+.column .card + .card {
+  margin-top: -2.3em;  /* About half the card height (4.6em) */
+}
+
+/* Playing card style (inspired by Anika Henke’s design) */
+.playingCards .card {
+  display: inline-block;
+  width: 3.3em;
+  height: 4.6em;
+  border: 1px solid #666;
+  border-radius: 0.3em;
+  padding: 0.25em;
+  margin: 0;
+  text-align: center;
+  font-size: 1.2em;
+  font-weight: normal;
+  font-family: Arial, sans-serif;
+  position: relative;
+  background-color: #fff;
+  box-shadow: 0.2em 0.2em 0.5em #333;
+}
+
+/* Suit-based coloring */
+.playingCards .card.hearts,
+.playingCards .card.diamonds {
+  color: red;
+}
+
+.playingCards .card.spades,
+.playingCards .card.clubs {
+  color: black;
+}
+
+/* Face-down card */
+.playingCards .card.back {
+  background-color: #222;
+  background-image: repeating-linear-gradient(45deg, #444, #444 5px, #222 5px, #222 10px);
+  text-indent: -9999px;
+  box-shadow: inset 0 0 0.5em #000;
+}
+
+/* Rank and suit placement */
+.playingCards .card .rank,
+.playingCards .card .suit {
+  display: block;
+  line-height: 1;
+  text-align: left;
+}
+
+.playingCards .card .rank {
+  font-size: 1em;
+}
+
+.playingCards .card .suit {
+  font-size: 1.2em;
+  line-height: 1;
+  margin-top: 0em;
+  text-align: left;
+}
