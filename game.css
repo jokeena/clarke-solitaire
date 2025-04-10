@@ -40,7 +40,7 @@ h1 {
 
 /* Overlap each card except the first within each column */
 .column .card + .card {
-  margin-top: -3.1em;  /* About half the card height (4.6em) */
+  margin-top: -3.8em;  /* About half the card height (4.6em) */
 }
 
 /* Playing card style (inspired by Anika Henke’s design) */
@@ -115,16 +115,21 @@ h1 {
 }
 
 .foundation {
-  width: 3.3em;
-  height: 4.6em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 2px dashed #aaa;
   border-radius: 0.3em;
   box-shadow: 0 0 6px rgba(0,0,0,0.3);
   background-color: #1c4a2b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
+
+  /* NEW: match card size + room for padding */
+  width: 4.5em;
+  height: 6em;
 }
+
+
 
 .popup {
   position: fixed;

@@ -141,16 +141,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const cardDiv = document.createElement('div');
         cardDiv.classList.add('card', suit, `rank-${card.rank.toLowerCase()}`);
   
+        const cardContent = document.createElement('div');
+        cardContent.classList.add('card-content');
+        
         const rankSpan = document.createElement('span');
         rankSpan.classList.add('rank');
         rankSpan.textContent = card.rank;
-  
+        
         const suitSpan = document.createElement('span');
-        suitSpan.classList.add('suit');
-        suitSpan.textContent = getSuitSymbol(suit);
-  
-        cardDiv.appendChild(rankSpan);
-        cardDiv.appendChild(suitSpan);
+        suitSpan.classList.add('suit-symbol');
+        suitSpan.textContent = getSuitSymbol(card.suit);
+        
+        cardContent.appendChild(rankSpan);
+        cardContent.appendChild(suitSpan);
+        cardDiv.appendChild(cardContent);
+        
   
         document.querySelector(`.foundation[data-suit="${suit}"]`).appendChild(cardDiv);
       }
