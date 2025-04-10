@@ -172,3 +172,22 @@ h1 {
   display: none;
 }
 
+#undo-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #c62c2c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#undo-button:hover {
+  background-color: #a12222;
+}

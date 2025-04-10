@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     spades: []
   };
 
+  let history = [];
+
   function createDeck() {
     let deck = [];
     for (let suit of suits) {
@@ -93,9 +95,11 @@ document.addEventListener('DOMContentLoaded', () => {
           cardDiv.appendChild(cardContent);
 
           cardDiv.addEventListener('click', () => {
+            const prevState = cloneState(tableau, foundations);
             if (tryMoveToFoundation(card, column, tableau, foundations)) {
               renderTableau(tableau);
               renderFoundations(foundations);
+              history.push(prevState);
               if (checkForWin(foundations)) {
                 document.getElementById('win-popup').classList.remove('hidden');
               }
@@ -105,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tryMoveToEmptyColumn(card, column, tableau)) {
               renderTableau(tableau);
               renderFoundations(foundations);
+              history.push(prevState);
               if (checkForWin(foundations)) {
                 document.getElementById('win-popup').classList.remove('hidden');
               }
@@ -114,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tryMoveToStack(card, column, tableau)) {
               renderTableau(tableau);
               renderFoundations(foundations);
+              history.push(prevState);
               if (checkForWin(foundations)) {
                 document.getElementById('win-popup').classList.remove('hidden');
               }
@@ -240,8 +246,25 @@ document.addEventListener('DOMContentLoaded', () => {
     return Object.values(foundations).every(pile => pile.length === 13);
   }  
 
+  function cloneState(tableau, foundations) {
+    return {
+      tableau: JSON.parse(JSON.stringify(tableau)),
+      foundations: JSON.parse(JSON.stringify(foundations))
+    };
+  }
+
   document.getElementById('play-again').addEventListener('click', () => {
     location.reload();
+  });
+
+  document.getElementById('undo-button').addEventListener('click', () => {
+    if (history.length > 0) {
+      const previous = history.pop();
+      tableau = previous.tableau;
+      foundations = previous.foundations;
+      renderTableau(tableau);
+      renderFoundations(foundations);
+    }
   });
   
 
