@@ -218,3 +218,16 @@ h1 {
 #restart-button:hover {
   background-color: #005fa3;
 }
+
+#footer-message {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Brush Script MT', cursive;
+  font-size: 24px;
+  color: #fff;
+  text-shadow: 1px 1px 3px #000;
+  z-index: 500;
+  pointer-events: none;
+}
