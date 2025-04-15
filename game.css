@@ -235,7 +235,7 @@ h1 {
 #reset-button {
   position: absolute;
   top: 80px;
-  left: 20px;
+  right: 20px;
   z-index: 100;
   padding: 10px 20px;
   font-size: 16px;
