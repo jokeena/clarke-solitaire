@@ -2,14 +2,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
   const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
-  let foundations = {
-    hearts: [],
-    diamonds: [],
-    clubs: [],
-    spades: []
-  };
-
   let history = [];
+  let tableau
+
+  let initialState;
 
   function createDeck() {
     let deck = [];
@@ -267,17 +263,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  document.getElementById('restart-button').addEventListener('click', () => {
-    location.reload();
-  });
-  
+  function initializeGame() {
+    let deck = shuffleDeck(createDeck());
+    let deal = dealCards(deck);
+    tableau = deal.tableau;
+    foundations = {
+      hearts: [],
+      diamonds: [],
+      clubs: [],
+      spades: []
+    };
+    renderTableau(tableau);
+    renderFoundations(foundations);
+    initialState = cloneState(tableau, foundations);
+  }
 
-  
-  let deck = shuffleDeck(createDeck());
-  let { tableau } = dealCards(deck);
-  renderTableau(tableau);
-  renderFoundations(foundations);
 
+    initializeGame();
+  
+    document.getElementById('reset-button').addEventListener('click', () => {
+      tableau = JSON.parse(JSON.stringify(initialState.tableau));
+      foundations = JSON.parse(JSON.stringify(initialState.foundations));
+      renderTableau(tableau);
+      renderFoundations(foundations);
+    });
+  
+    document.getElementById('restart-button').addEventListener('click', () => {
+      location.reload();
+    });
 
   console.log("Tableau:", tableau);
 });
