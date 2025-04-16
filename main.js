@@ -66,6 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
     tableau.forEach(column => {
       const columnDiv = document.createElement('div');
       columnDiv.classList.add('column');
+
+      if (column.length === 0) columnDiv.classList.add('empty');
   
       column.forEach(card => {
         const cardDiv = document.createElement('div');
