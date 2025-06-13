@@ -1,10 +1,11 @@
+// === main.js (updated for smooth visible animations) ===
 document.addEventListener('DOMContentLoaded', () => {
   const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
   const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
   let history = [];
-  let tableau
-
+  let tableau;
+  let foundations;
   let initialState;
 
   function createDeck() {
@@ -25,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return array;
   }
 
-  // Your custom deal pattern: 8 cards in cols 0–2, 7 cards in cols 3–6
   function dealCards(deck) {
     const tableau = [[], [], [], [], [], [], []];
     let cardIndex = 0;
@@ -45,148 +45,216 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     }
-
     return { tableau };
   }
 
   function getSuitSymbol(suit) {
-    switch (suit) {
-      case 'hearts': return '♥';
-      case 'diamonds': return '♦';
-      case 'clubs': return '♣';
-      case 'spades': return '♠';
-      default: return '?';
-    }
+    return { hearts: '♥', diamonds: '♦', clubs: '♣', spades: '♠' }[suit] || '?';
+  }
+
+  function animateCardMove(cardElement, fromRect, toRect, callback) {
+    const dx = toRect.left - fromRect.left;
+    const dy = toRect.top - fromRect.top;
+    const clone = cardElement.cloneNode(true);
+    clone.classList.add('animate-move');
+    clone.style.position = 'absolute';
+    clone.style.left = fromRect.left + 'px';
+    clone.style.top = fromRect.top + 'px';
+    document.body.appendChild(clone);
+
+    // Temporarily fade out the real card to simulate animation
+    cardElement.style.opacity = '0';
+
+    requestAnimationFrame(() => {
+      clone.style.transform = `translate(${dx}px, ${dy}px)`;
+    });
+
+    clone.addEventListener('transitionend', () => {
+      clone.remove();
+      cardElement.style.opacity = '1';
+      callback();
+    }, { once: true });
+  }
+
+  function moveCardWithAnimation(card, fromColumn, toColumn) {
+    const tableauContainer = document.getElementById('tableau');
+    const cardIndex = fromColumn.indexOf(card);
+    const movingStack = fromColumn.slice(cardIndex);
+  
+    const fromColumnDiv = tableauContainer.querySelectorAll('.column')[tableau.indexOf(fromColumn)];
+    const cardsInDOM = fromColumnDiv.querySelectorAll('.card');
+    const movingDOMCards = Array.from(cardsInDOM).slice(cardIndex);
+  
+    const clones = [];
+  
+    // Step 1: Create clones and position them
+    movingDOMCards.forEach((originalCard, i) => {
+      const rect = originalCard.getBoundingClientRect();
+      const clone = originalCard.cloneNode(true);
+      clone.classList.add('animate-move');
+      clone.style.left = `${rect.left}px`;
+      clone.style.top = `${rect.top}px`;
+      clone.style.position = 'absolute';
+      clone.style.width = `${rect.width}px`;
+      clone.style.height = `${rect.height}px`;
+      document.body.appendChild(clone);
+      originalCard.style.opacity = '0'; // hide original
+      clones.push({ clone, originalRect: rect });
+    });
+  
+    // Step 2: Mutate game state but DO NOT render yet
+    fromColumn.splice(cardIndex);
+    toColumn.push(...movingStack);
+    if (fromColumn.length > 0) fromColumn[fromColumn.length - 1].faceUp = true;
+  
+    // Step 3: Wait a frame, then calculate animation targets
+    requestAnimationFrame(() => {
+      // Render tableau but keep new destination cards hidden
+      renderTableau(tableau);
+      const toColumnDiv = tableauContainer.querySelectorAll('.column')[tableau.indexOf(toColumn)];
+      const targetCards = toColumnDiv.querySelectorAll('.card');
+      const newTargets = Array.from(targetCards).slice(-movingStack.length);
+      newTargets.forEach(card => card.style.opacity = '0');
+  
+      clones.forEach(({ clone }, i) => {
+        const toRect = newTargets[i].getBoundingClientRect();
+        const dx = toRect.left - clones[i].originalRect.left;
+        const dy = toRect.top - clones[i].originalRect.top;
+        clone.style.transform = `translate(${dx}px, ${dy}px)`;
+      });
+  
+      // Step 4: After animation ends, clean up
+      setTimeout(() => {
+        clones.forEach(({ clone }) => clone.remove());
+        newTargets.forEach(card => (card.style.opacity = '1'));
+      }, 600); // Match your transition duration
+    });
+  }
+  
+  
+  
+
+  function performCardMove(card, fromColumn, toColumn) {
+    const index = fromColumn.indexOf(card);
+    const movingStack = fromColumn.slice(index);
+    fromColumn.splice(index);
+    toColumn.push(...movingStack);
+    if (fromColumn.length > 0) fromColumn[fromColumn.length - 1].faceUp = true;
   }
 
   function renderTableau(tableau) {
     const tableauContainer = document.getElementById('tableau');
     tableauContainer.innerHTML = '';
-  
     tableau.forEach(column => {
       const columnDiv = document.createElement('div');
       columnDiv.classList.add('column');
-
       if (column.length === 0) columnDiv.classList.add('empty');
-  
       column.forEach(card => {
         const cardDiv = document.createElement('div');
-  
         if (!card.faceUp) {
           cardDiv.classList.add('card', 'back');
         } else {
           cardDiv.classList.add('card', card.suit, `rank-${card.rank.toLowerCase()}`);
-  
           const cardContent = document.createElement('div');
           cardContent.classList.add('card-content');
-          
-          const rankSpan = document.createElement('span');
-          rankSpan.classList.add('rank');
-          rankSpan.textContent = card.rank;
-          
-          const suitSpan = document.createElement('span');
-          suitSpan.classList.add('suit-symbol');
-          suitSpan.textContent = getSuitSymbol(card.suit);
-          
-          cardContent.appendChild(rankSpan);
-          cardContent.appendChild(suitSpan);
+          cardContent.innerHTML = `<span class="rank">${card.rank}</span><span class="suit-symbol">${getSuitSymbol(card.suit)}</span>`;
           cardDiv.appendChild(cardContent);
-
           cardDiv.addEventListener('click', () => {
             const prevState = cloneState(tableau, foundations);
-            if (tryMoveToFoundation(card, column, tableau, foundations)) {
+            if (tryMoveToFoundation(card, column, tableau, foundations) ||
+                tryMoveToEmptyColumn(card, column, tableau) ||
+                tryMoveToStack(card, column, tableau)) {
               renderTableau(tableau);
               renderFoundations(foundations);
               history.push(prevState);
-              if (checkForWin(foundations)) {
-                document.getElementById('win-popup').classList.remove('hidden');
-              }
-              return;
-            }
-          
-            if (tryMoveToEmptyColumn(card, column, tableau)) {
-              renderTableau(tableau);
-              renderFoundations(foundations);
-              history.push(prevState);
-              if (checkForWin(foundations)) {
-                document.getElementById('win-popup').classList.remove('hidden');
-              }
-              return;
-            }
-          
-            if (tryMoveToStack(card, column, tableau)) {
-              renderTableau(tableau);
-              renderFoundations(foundations);
-              history.push(prevState);
-              if (checkForWin(foundations)) {
-                document.getElementById('win-popup').classList.remove('hidden');
-              }
-              return;
+              if (checkForWin(foundations)) document.getElementById('win-popup').classList.remove('hidden');
             }
           });
-          
         }
-  
         columnDiv.appendChild(cardDiv);
       });
-  
       tableauContainer.appendChild(columnDiv);
     });
   }
 
   function renderFoundations(foundations) {
-    const foundationDivs = document.querySelectorAll('.foundation');
-    foundationDivs.forEach(div => div.innerHTML = ''); // clear all
-  
+    document.querySelectorAll('.foundation').forEach(div => div.innerHTML = '');
     for (const suit in foundations) {
       const stack = foundations[suit];
       if (stack.length > 0) {
-        const card = stack[stack.length - 1]; // top card
+        const card = stack[stack.length - 1];
         const cardDiv = document.createElement('div');
         cardDiv.classList.add('card', suit, `rank-${card.rank.toLowerCase()}`);
-  
         const cardContent = document.createElement('div');
         cardContent.classList.add('card-content');
-        
-        const rankSpan = document.createElement('span');
-        rankSpan.classList.add('rank');
-        rankSpan.textContent = card.rank;
-        
-        const suitSpan = document.createElement('span');
-        suitSpan.classList.add('suit-symbol');
-        suitSpan.textContent = getSuitSymbol(card.suit);
-        
-        cardContent.appendChild(rankSpan);
-        cardContent.appendChild(suitSpan);
+        cardContent.innerHTML = `<span class="rank">${card.rank}</span><span class="suit-symbol">${getSuitSymbol(card.suit)}</span>`;
         cardDiv.appendChild(cardContent);
-        
-  
         document.querySelector(`.foundation[data-suit="${suit}"]`).appendChild(cardDiv);
       }
     }
   }
 
-  function tryMoveToFoundation(card, column, tableau, foundations) {
-    if (column[column.length - 1] !== card) return false;
+  function tryMoveToFoundation(card, fromColumn, tableau, foundations) {
+    if (fromColumn[fromColumn.length - 1] !== card) return false;
   
     const suitPile = foundations[card.suit];
-    const currentRank = card.rank;
     const topCard = suitPile[suitPile.length - 1];
     const expectedNext = getNextRank(topCard ? topCard.rank : null);
   
-    if ((topCard === undefined && currentRank === 'A') || currentRank === expectedNext) {
-      column.splice(column.indexOf(card), 1);
-      if (column.length > 0) {
-        column[column.length - 1].faceUp = true;
-      }
+    if ((!topCard && card.rank === 'A') || card.rank === expectedNext) {
+      const cardIndex = fromColumn.indexOf(card);
+  
+      // Get the DOM element before modifying state
+      const tableauContainer = document.getElementById('tableau');
+      const fromColumnDiv = tableauContainer.querySelectorAll('.column')[tableau.indexOf(fromColumn)];
+      const domCard = fromColumnDiv.querySelectorAll('.card')[cardIndex];
+      const rectFrom = domCard.getBoundingClientRect();
+  
+      // Modify state but don't render yet
+      fromColumn.pop();
+      if (fromColumn.length > 0) fromColumn[fromColumn.length - 1].faceUp = true;
       suitPile.push(card);
+  
+      requestAnimationFrame(() => {
+        renderTableau(tableau);
+        renderFoundations(foundations);
+  
+        const foundationDiv = document.querySelector(`.foundation[data-suit="${card.suit}"]`);
+        const foundationCard = foundationDiv.querySelector('.card');
+        if (!foundationCard) return;
+  
+        foundationCard.style.opacity = '0';
+        const rectTo = foundationCard.getBoundingClientRect();
+  
+        const clone = domCard.cloneNode(true);
+        clone.classList.add('animate-move');
+        clone.style.position = 'absolute';
+        clone.style.left = `${rectFrom.left}px`;
+        clone.style.top = `${rectFrom.top}px`;
+        clone.style.width = `${rectFrom.width}px`;
+        clone.style.height = `${rectFrom.height}px`;
+        document.body.appendChild(clone);
+        domCard.style.opacity = '0';
+  
+        requestAnimationFrame(() => {
+          const dx = rectTo.left - rectFrom.left;
+          const dy = rectTo.top - rectFrom.top;
+          clone.style.transform = `translate(${dx}px, ${dy}px)`;
+        });
+  
+        setTimeout(() => {
+          clone.remove();
+          foundationCard.style.opacity = '1';
+        }, 600);
+      });
+  
       return true;
     }
   
     return false;
   }
   
-  
+
   function getNextRank(rank) {
     const order = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     const index = order.indexOf(rank);
@@ -195,54 +263,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function tryMoveToEmptyColumn(card, fromColumn, tableau) {
     if (card.rank !== 'K') return false;
-  
-    const cardIndex = fromColumn.indexOf(card);
-    const movingStack = fromColumn.slice(cardIndex);
-  
     for (let col of tableau) {
       if (col.length === 0) {
-        fromColumn.splice(cardIndex); 
-        if (fromColumn.length > 0) {
-          fromColumn[fromColumn.length - 1].faceUp = true;
-        }
-        col.push(...movingStack);  
+        moveCardWithAnimation(card, fromColumn, col);
         return true;
       }
     }
-  
     return false;
   }
-  
+
   function tryMoveToStack(card, fromColumn, tableau) {
-    const cardIndex = fromColumn.indexOf(card);
     if (!card.faceUp) return false;
-  
-    const movingStack = fromColumn.slice(cardIndex);
-  
     for (let col of tableau) {
       if (col === fromColumn) continue;
-  
       const target = col[col.length - 1];
       if (!target || !target.faceUp) continue;
-  
       if (target.suit === card.suit && target.rank === getNextRank(card.rank)) {
-        fromColumn.splice(cardIndex);
-        col.push(...movingStack);
-  
-        if (fromColumn.length > 0) {
-          fromColumn[fromColumn.length - 1].faceUp = true;
-        }
-  
+        moveCardWithAnimation(card, fromColumn, col);
         return true;
       }
     }
-  
     return false;
   }
 
   function checkForWin(foundations) {
     return Object.values(foundations).every(pile => pile.length === 13);
-  }  
+  }
 
   function cloneState(tableau, foundations) {
     return {
@@ -251,9 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  document.getElementById('play-again').addEventListener('click', () => {
-    location.reload();
-  });
+  document.getElementById('play-again').addEventListener('click', () => location.reload());
 
   document.getElementById('undo-button').addEventListener('click', () => {
     if (history.length > 0) {
@@ -269,30 +313,20 @@ document.addEventListener('DOMContentLoaded', () => {
     let deck = shuffleDeck(createDeck());
     let deal = dealCards(deck);
     tableau = deal.tableau;
-    foundations = {
-      hearts: [],
-      diamonds: [],
-      clubs: [],
-      spades: []
-    };
+    foundations = { hearts: [], diamonds: [], clubs: [], spades: [] };
     renderTableau(tableau);
     renderFoundations(foundations);
     initialState = cloneState(tableau, foundations);
   }
 
+  initializeGame();
 
-    initializeGame();
-  
-    document.getElementById('reset-button').addEventListener('click', () => {
-      tableau = JSON.parse(JSON.stringify(initialState.tableau));
-      foundations = JSON.parse(JSON.stringify(initialState.foundations));
-      renderTableau(tableau);
-      renderFoundations(foundations);
-    });
-  
-    document.getElementById('restart-button').addEventListener('click', () => {
-      location.reload();
-    });
+  document.getElementById('reset-button').addEventListener('click', () => {
+    tableau = JSON.parse(JSON.stringify(initialState.tableau));
+    foundations = JSON.parse(JSON.stringify(initialState.foundations));
+    renderTableau(tableau);
+    renderFoundations(foundations);
+  });
 
-  console.log("Tableau:", tableau);
+  document.getElementById('restart-button').addEventListener('click', () => location.reload());
 });

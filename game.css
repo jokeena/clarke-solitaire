@@ -257,3 +257,22 @@ h1 {
   height: 6em;
   min-height: unset; /* override .column min-height */
 }
+
+.card.animate-move {
+  position: absolute;
+  width: 3.3em;
+  height: 4.6em;
+  z-index: 1000;
+  transition: transform 0.6s ease-in-out;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+}
+
+body {
+  position: relative;
+}
+
+
+
+
