@@ -1,4 +1,4 @@
-// === main.js (updated for smooth visible animations) ===
+// === main.js (updated for card flip animation) ===
 document.addEventListener('DOMContentLoaded', () => {
   const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
   const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
@@ -52,96 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return { hearts: '♥', diamonds: '♦', clubs: '♣', spades: '♠' }[suit] || '?';
   }
 
-  function animateCardMove(cardElement, fromRect, toRect, callback) {
-    const dx = toRect.left - fromRect.left;
-    const dy = toRect.top - fromRect.top;
-    const clone = cardElement.cloneNode(true);
-    clone.classList.add('animate-move');
-    clone.style.position = 'absolute';
-    clone.style.left = fromRect.left + 'px';
-    clone.style.top = fromRect.top + 'px';
-    document.body.appendChild(clone);
-
-    // Temporarily fade out the real card to simulate animation
-    cardElement.style.opacity = '0';
-
-    requestAnimationFrame(() => {
-      clone.style.transform = `translate(${dx}px, ${dy}px)`;
-    });
-
-    clone.addEventListener('transitionend', () => {
-      clone.remove();
-      cardElement.style.opacity = '1';
-      callback();
-    }, { once: true });
-  }
-
-  function moveCardWithAnimation(card, fromColumn, toColumn) {
-    const tableauContainer = document.getElementById('tableau');
-    const cardIndex = fromColumn.indexOf(card);
-    const movingStack = fromColumn.slice(cardIndex);
-  
-    const fromColumnDiv = tableauContainer.querySelectorAll('.column')[tableau.indexOf(fromColumn)];
-    const cardsInDOM = fromColumnDiv.querySelectorAll('.card');
-    const movingDOMCards = Array.from(cardsInDOM).slice(cardIndex);
-  
-    const clones = [];
-  
-    // Step 1: Create clones and position them
-    movingDOMCards.forEach((originalCard, i) => {
-      const rect = originalCard.getBoundingClientRect();
-      const clone = originalCard.cloneNode(true);
-      clone.classList.add('animate-move');
-      clone.style.left = `${rect.left}px`;
-      clone.style.top = `${rect.top}px`;
-      clone.style.position = 'absolute';
-      clone.style.width = `${rect.width}px`;
-      clone.style.height = `${rect.height}px`;
-      document.body.appendChild(clone);
-      originalCard.style.opacity = '0'; // hide original
-      clones.push({ clone, originalRect: rect });
-    });
-  
-    // Step 2: Mutate game state but DO NOT render yet
-    fromColumn.splice(cardIndex);
-    toColumn.push(...movingStack);
-    if (fromColumn.length > 0) fromColumn[fromColumn.length - 1].faceUp = true;
-  
-    // Step 3: Wait a frame, then calculate animation targets
-    requestAnimationFrame(() => {
-      // Render tableau but keep new destination cards hidden
-      renderTableau(tableau);
-      const toColumnDiv = tableauContainer.querySelectorAll('.column')[tableau.indexOf(toColumn)];
-      const targetCards = toColumnDiv.querySelectorAll('.card');
-      const newTargets = Array.from(targetCards).slice(-movingStack.length);
-      newTargets.forEach(card => card.style.opacity = '0');
-  
-      clones.forEach(({ clone }, i) => {
-        const toRect = newTargets[i].getBoundingClientRect();
-        const dx = toRect.left - clones[i].originalRect.left;
-        const dy = toRect.top - clones[i].originalRect.top;
-        clone.style.transform = `translate(${dx}px, ${dy}px)`;
-      });
-  
-      // Step 4: After animation ends, clean up
-      setTimeout(() => {
-        clones.forEach(({ clone }) => clone.remove());
-        newTargets.forEach(card => (card.style.opacity = '1'));
-      }, 600); // Match your transition duration
-    });
-  }
-  
-  
-  
-
-  function performCardMove(card, fromColumn, toColumn) {
-    const index = fromColumn.indexOf(card);
-    const movingStack = fromColumn.slice(index);
-    fromColumn.splice(index);
-    toColumn.push(...movingStack);
-    if (fromColumn.length > 0) fromColumn[fromColumn.length - 1].faceUp = true;
-  }
-
   function renderTableau(tableau) {
     const tableauContainer = document.getElementById('tableau');
     tableauContainer.innerHTML = '';
@@ -149,34 +59,67 @@ document.addEventListener('DOMContentLoaded', () => {
       const columnDiv = document.createElement('div');
       columnDiv.classList.add('column');
       if (column.length === 0) columnDiv.classList.add('empty');
+  
       column.forEach(card => {
         const cardDiv = document.createElement('div');
+  
         if (!card.faceUp) {
           cardDiv.classList.add('card', 'back');
         } else {
           cardDiv.classList.add('card', card.suit, `rank-${card.rank.toLowerCase()}`);
+  
+          // Flip animation class
+          if (!card._wasFaceUp) {
+            requestAnimationFrame(() => {
+              cardDiv.classList.add('flip-animate');
+              setTimeout(() => {
+                cardDiv.classList.remove('flip-animate');
+              }, 400); // must match animation duration
+            });            
+          }
+  
           const cardContent = document.createElement('div');
           cardContent.classList.add('card-content');
           cardContent.innerHTML = `<span class="rank">${card.rank}</span><span class="suit-symbol">${getSuitSymbol(card.suit)}</span>`;
           cardDiv.appendChild(cardContent);
+  
+          // Card click
           cardDiv.addEventListener('click', () => {
             const prevState = cloneState(tableau, foundations);
-            if (tryMoveToFoundation(card, column, tableau, foundations) ||
-                tryMoveToEmptyColumn(card, column, tableau) ||
-                tryMoveToStack(card, column, tableau)) {
+            let moved = false;
+
+            if (
+              tryMoveToFoundation(card, column, tableau, foundations) ||
+              tryMoveToEmptyColumn(card, column, tableau) ||
+              tryMoveToStack(card, column, tableau)
+            ) {
+              moved = true;
               renderTableau(tableau);
               renderFoundations(foundations);
               history.push(prevState);
-              if (checkForWin(foundations)) document.getElementById('win-popup').classList.remove('hidden');
+              if (checkForWin(foundations)) {
+                document.getElementById('win-popup').classList.remove('hidden');
+              }
             }
+            
+            if (!moved) {
+              cardDiv.classList.add('shake');
+              setTimeout(() => cardDiv.classList.remove('shake'), 400); // Match animation time
+            }
+            
           });
         }
+  
+        // Mark card as having been rendered face-up to prevent repeat animation
+        card._wasFaceUp = card.faceUp;
+  
         columnDiv.appendChild(cardDiv);
       });
+  
       tableauContainer.appendChild(columnDiv);
     });
   }
-
+  
   function renderFoundations(foundations) {
     document.querySelectorAll('.foundation').forEach(div => div.innerHTML = '');
     for (const suit in foundations) {
@@ -196,36 +139,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function tryMoveToFoundation(card, fromColumn, tableau, foundations) {
     if (fromColumn[fromColumn.length - 1] !== card) return false;
-  
     const suitPile = foundations[card.suit];
     const topCard = suitPile[suitPile.length - 1];
     const expectedNext = getNextRank(topCard ? topCard.rank : null);
-  
+
     if ((!topCard && card.rank === 'A') || card.rank === expectedNext) {
       const cardIndex = fromColumn.indexOf(card);
-  
-      // Get the DOM element before modifying state
       const tableauContainer = document.getElementById('tableau');
       const fromColumnDiv = tableauContainer.querySelectorAll('.column')[tableau.indexOf(fromColumn)];
       const domCard = fromColumnDiv.querySelectorAll('.card')[cardIndex];
       const rectFrom = domCard.getBoundingClientRect();
-  
-      // Modify state but don't render yet
+
       fromColumn.pop();
       if (fromColumn.length > 0) fromColumn[fromColumn.length - 1].faceUp = true;
       suitPile.push(card);
-  
+
       requestAnimationFrame(() => {
         renderTableau(tableau);
         renderFoundations(foundations);
-  
+
         const foundationDiv = document.querySelector(`.foundation[data-suit="${card.suit}"]`);
         const foundationCard = foundationDiv.querySelector('.card');
         if (!foundationCard) return;
-  
+
         foundationCard.style.opacity = '0';
         const rectTo = foundationCard.getBoundingClientRect();
-  
+
         const clone = domCard.cloneNode(true);
         clone.classList.add('animate-move');
         clone.style.position = 'absolute';
@@ -235,25 +174,24 @@ document.addEventListener('DOMContentLoaded', () => {
         clone.style.height = `${rectFrom.height}px`;
         document.body.appendChild(clone);
         domCard.style.opacity = '0';
-  
+
         requestAnimationFrame(() => {
           const dx = rectTo.left - rectFrom.left;
           const dy = rectTo.top - rectFrom.top;
           clone.style.transform = `translate(${dx}px, ${dy}px)`;
         });
-  
+
         setTimeout(() => {
           clone.remove();
           foundationCard.style.opacity = '1';
         }, 600);
       });
-  
+
       return true;
     }
-  
+
     return false;
   }
-  
 
   function getNextRank(rank) {
     const order = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
@@ -284,6 +222,54 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     return false;
+  }
+
+  function moveCardWithAnimation(card, fromColumn, toColumn) {
+    const tableauContainer = document.getElementById('tableau');
+    const cardIndex = fromColumn.indexOf(card);
+    const movingStack = fromColumn.slice(cardIndex);
+    const fromColumnDiv = tableauContainer.querySelectorAll('.column')[tableau.indexOf(fromColumn)];
+    const cardsInDOM = fromColumnDiv.querySelectorAll('.card');
+    const movingDOMCards = Array.from(cardsInDOM).slice(cardIndex);
+    const clones = [];
+
+    movingDOMCards.forEach((originalCard, i) => {
+      const rect = originalCard.getBoundingClientRect();
+      const clone = originalCard.cloneNode(true);
+      clone.classList.add('animate-move');
+      clone.style.left = `${rect.left}px`;
+      clone.style.top = `${rect.top}px`;
+      clone.style.position = 'absolute';
+      clone.style.width = `${rect.width}px`;
+      clone.style.height = `${rect.height}px`;
+      document.body.appendChild(clone);
+      originalCard.style.opacity = '0';
+      clones.push({ clone, originalRect: rect });
+    });
+
+    fromColumn.splice(cardIndex);
+    toColumn.push(...movingStack);
+    if (fromColumn.length > 0) fromColumn[fromColumn.length - 1].faceUp = true;
+
+    requestAnimationFrame(() => {
+      renderTableau(tableau);
+      const toColumnDiv = tableauContainer.querySelectorAll('.column')[tableau.indexOf(toColumn)];
+      const targetCards = toColumnDiv.querySelectorAll('.card');
+      const newTargets = Array.from(targetCards).slice(-movingStack.length);
+      newTargets.forEach(card => card.style.opacity = '0');
+
+      clones.forEach(({ clone }, i) => {
+        const toRect = newTargets[i].getBoundingClientRect();
+        const dx = toRect.left - clones[i].originalRect.left;
+        const dy = toRect.top - clones[i].originalRect.top;
+        clone.style.transform = `translate(${dx}px, ${dy}px)`;
+      });
+
+      setTimeout(() => {
+        clones.forEach(({ clone }) => clone.remove());
+        newTargets.forEach(card => card.style.opacity = '1');
+      }, 600);
+    });
   }
 
   function checkForWin(foundations) {
